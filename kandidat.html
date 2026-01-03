@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pilih Kandidat - E-Voting OSIS</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h2>Pilih Ketua OSIS</h2>
+
+      <div class="kandidat-wrapper">
+        <!-- Kandidat 1 -->
+        <div class="kandidat-card">
+          <img src="img/kandidat1.jpg" alt="Kandidat 1" />
+          <h4>Risa Amanda</h4>
+          <p>Visi: Meningkatkan kreativitas dan kedisiplinan siswa.</p>
+          <button class="pilih-btn" onclick="pilih(1)">Pilih</button>
+        </div>
+
+        <!-- Kandidat 2 -->
+        <div class="kandidat-card">
+          <img src="img/kandidat2.jpg" alt="Kandidat 2" />
+          <h4>Fajar Pratama</h4>
+          <p>Visi: Menciptakan lingkungan sekolah yang aktif dan inspiratif.</p>
+          <button class="pilih-btn" onclick="pilih(2)">Pilih</button>
+        </div>
+
+        <!-- Kandidat 3 -->
+        <div class="kandidat-card">
+          <img src="img/kandidat3.jpg" alt="Kandidat 3" />
+          <h4>Nadia Putri</h4>
+          <p>Visi: Memperkuat prestasi akademik dan non-akademik.</p>
+          <button class="pilih-btn" onclick="pilih(3)">Pilih</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function pilih(id) {
+        let nis = localStorage.getItem("current_nis");
+
+        if (!nis) {
+          alert("Silakan login terlebih dahulu!");
+          window.location = "index.html";
+          return;
+        }
+
+        // Simpan suara kandidat
+        let total = localStorage.getItem("vote_" + id);
+        total = total ? Number(total) + 1 : 1;
+
+        localStorage.setItem("vote_" + id, total);
+
+        // Tandai pemilih sudah memilih
+        localStorage.setItem("voted_" + nis, "true");
+
+        // Hapus session NIS
+        localStorage.removeItem("current_nis");
+
+        alert("Terima kasih! Suara Anda sudah direkam.");
+        window.location = "sudah.html";
+      }
+    </script>
+  </body>
+</html>

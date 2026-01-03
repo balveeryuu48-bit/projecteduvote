@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login Admin</title>
+    <link rel="icon" href="assets/img/logo-kpo.png" />
+
+    <!-- Google Icons -->
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet" />
+
+    <style>
+      /* RESET */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Poppins", sans-serif;
+      }
+
+      body {
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #eef2f7;
+      }
+
+      /* CONTAINER */
+      .login-container {
+        width: 900px;
+        height: 500px;
+        display: flex;
+        border-radius: 18px;
+        overflow: hidden;
+        background: white;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        animation: fadeIn 0.5s ease;
+      }
+
+      /* ANIMATION */
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(15px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* LEFT IMAGE */
+      .login-image {
+        width: 50%;
+        background: #1e3a8a;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .login-image img {
+        width: 90%;
+        border-radius: 10px;
+        object-fit: cover;
+      }
+
+      /* RIGHT CARD */
+      .login-card {
+        width: 50%;
+        padding: 45px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .login-card h2 {
+        font-size: 28px;
+        margin-bottom: 25px;
+        color: #1e3a8a;
+        font-weight: 700;
+      }
+
+      .form-group {
+        margin-bottom: 18px;
+      }
+
+      label {
+        font-size: 15px;
+        margin-bottom: 5px;
+        display: block;
+        color: #333;
+        font-weight: 500;
+      }
+
+      /* INPUT */
+      input {
+        width: 100%;
+        padding: 12px 14px;
+        font-size: 15px;
+        border: 1.6px solid #cbd5e1;
+        border-radius: 10px;
+        outline: none;
+        transition: 0.2s;
+      }
+
+      input:focus {
+        border-color: #1e3a8a;
+        box-shadow: 0 0 4px rgba(30, 58, 138, 0.35);
+      }
+
+      /* PASSWORD WITH ICON */
+      .password-wrapper {
+        position: relative;
+      }
+
+      .toggle-eye {
+        position: absolute;
+        right: 12px;
+        top: 8px;
+        cursor: pointer;
+        font-size: 26px;
+        color: #555;
+        transition: 0.2s;
+      }
+
+      .toggle-eye:hover {
+        color: #1e3a8a;
+      }
+
+      /* BUTTON */
+      button {
+        width: 100%;
+        padding: 12px;
+        background: #1e3a8a;
+        border: none;
+        border-radius: 10px;
+        color: white;
+        font-size: 16px;
+        cursor: pointer;
+        margin-top: 10px;
+        font-weight: 600;
+        transition: 0.2s;
+      }
+
+      button:hover {
+        background: #2644a3;
+        transform: translateY(-2px);
+      }
+
+      /* RESPONSIVE */
+      @media (max-width: 850px) {
+        .login-container {
+          width: 92%;
+          height: auto;
+          flex-direction: column;
+        }
+
+        .login-image {
+          width: 100%;
+          height: 250px;
+        }
+
+        .login-card {
+          width: 100%;
+          padding: 30px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="login-container">
+      <!-- Gambar kiri -->
+      <div class="login-image">
+        <img src="assets/img/logo-kpo.png" alt="Admin Image" />
+      </div>
+
+      <!-- Form kanan -->
+      <div class="login-card">
+        <h2>Login Admin</h2>
+
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" id="username" placeholder="Masukkan username" />
+        </div>
+
+        <div class="form-group">
+          <label>Password</label>
+
+          <div class="password-wrapper">
+            <input
+              type="password"
+              id="password"
+              placeholder="Masukkan password" />
+            <span class="material-icons toggle-eye" onclick="togglePassword()"
+              >visibility</span
+            >
+          </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="loginAdmin()">Login</button>
+      </div>
+    </div>
+
+    <script>
+      // Show/Hide password
+      function togglePassword() {
+        const pass = document.getElementById("password");
+        const eye = document.querySelector(".toggle-eye");
+
+        if (pass.type === "password") {
+          pass.type = "text";
+          eye.textContent = "visibility_off";
+        } else {
+          pass.type = "password";
+          eye.textContent = "visibility";
+        }
+      }
+
+      // Contoh login admin
+      function loginAdmin() {
+        const usernameInput = document.getElementById("username").value.trim();
+        const passwordInput = document.getElementById("password").value.trim();
+
+        // Validasi login (bisa disesuaikan dengan database/localStorage)
+        if (usernameInput === "sekretaris" && passwordInput === "sekre123456") {
+          // Simpan login dan username di localStorage
+          localStorage.setItem("admin_login", "true");
+          localStorage.setItem("admin_username", usernameInput);
+
+          // Redirect ke dashboard admin
+          window.location.href = "admin-dashboard.html";
+        } else {
+          alert("Username atau password salah!");
+        }
+      }
+    </script>
+  </body>
+</html>

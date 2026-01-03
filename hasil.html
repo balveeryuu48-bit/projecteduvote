@@ -1,0 +1,155 @@
+<script>
+     
+
+     
+
+      
+
+      // ============================
+      // PROFIL SEKOLAH
+      // ============================
+      function loadProfilSekolah() {
+        let data = JSON.parse(localStorage.getItem("profilSekolah")) || {
+          nama: "-",
+          npsn: "-",
+          nss: "-",
+          akreditasi: "-",
+          jenjang: "-",
+          status: "-",
+          kepala: "-",
+          operator: "-",
+          tahun: "-",
+          email: "-",
+          telepon: "-",
+          website: "-",
+          alamat: "-",
+          logo: "",
+        };
+        localStorage.setItem("profilSekolah", JSON.stringify(data));
+
+        // Tampilkan di halaman
+        document.getElementById("namaSekolah").innerText = data.nama;
+        document.getElementById("npsn").innerText = data.npsn;
+        document.getElementById("nss").innerText = data.nss;
+        document.getElementById("akreditasi").innerText = data.akreditasi;
+        document.getElementById("jenjang").innerText = data.jenjang;
+        document.getElementById("statusSekolah").innerText = data.status;
+        document.getElementById("kepalaSekolah").innerText = data.kepala;
+        document.getElementById("operatorSekolah").innerText = data.operator;
+        document.getElementById("tahunBerdiri").innerText = data.tahun;
+        document.getElementById("emailSekolah").innerText = data.email;
+        document.getElementById("teleponSekolah").innerText = data.telepon;
+        document.getElementById("websiteSekolah").innerText = data.website;
+        document.getElementById("alamatSekolah").innerText = data.alamat;
+
+        // Tampilkan di modal
+        document.getElementById("editNamaSekolah").value = data.nama;
+        document.getElementById("editNpsn").value = data.npsn;
+        document.getElementById("editNss").value = data.nss;
+        document.getElementById("editAkreditasi").value = data.akreditasi;
+        document.getElementById("editStatus").value = data.status;
+        document.getElementById("editKepalaSekolah").value = data.kepala;
+        document.getElementById("editOperator").value = data.operator;
+        document.getElementById("editTahunBerdiri").value = data.tahun;
+        document.getElementById("editEmail").value = data.email;
+        document.getElementById("editTelepon").value = data.telepon;
+        document.getElementById("editWebsite").value = data.website;
+        document.getElementById("editAlamat").value = data.alamat;
+        document.getElementById("editJenjang").value = data.jenjang;
+        document.getElementById("previewLogo").src =
+          data.logo || "img/default-logo.png";
+      }
+
+      // Saat pilih file logo
+      document
+        .getElementById("editLogo")
+        .addEventListener("change", function () {
+          const file = this.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+              document.getElementById("previewLogo").src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+
+      function simpanProfil() {
+        let logoFile = document.getElementById("editLogo").files[0];
+        if (logoFile) {
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            saveData(e.target.result);
+          };
+          reader.readAsDataURL(logoFile);
+        } else {
+          saveData(document.getElementById("previewLogo").src); // pakai logo sebelumnya
+        }
+        const data = {
+          nama: document.getElementById("editNamaSekolah").value,
+          npsn: document.getElementById("editNpsn").value,
+          nss: document.getElementById("editNss").value,
+          akreditasi: document.getElementById("editAkreditasi").value,
+          jenjang: document.getElementById("editJenjang").value,
+          status: document.getElementById("editStatus").value,
+          kepala: document.getElementById("editKepalaSekolah").value,
+          operator: document.getElementById("editOperator").value,
+          tahun: document.getElementById("editTahunBerdiri").value,
+          email: document.getElementById("editEmail").value,
+          telepon: document.getElementById("editTelepon").value,
+          website: document.getElementById("editWebsite").value,
+          alamat: document.getElementById("editAlamat").value,
+        };
+        localStorage.setItem("profilSekolah", JSON.stringify(data));
+        loadProfilSekolah();
+        bootstrap.Modal.getInstance(
+          document.getElementById("modalEditProfil")
+        ).hide();
+        alert("Profil sekolah berhasil diperbarui!");
+      }
+
+      function hapusProfil() {
+        if (!confirm("Yakin ingin menghapus profil sekolah?")) return;
+        localStorage.removeItem("profilSekolah");
+        loadProfilSekolah();
+        bootstrap.Modal.getInstance(
+          document.getElementById("modalEditProfil")
+        ).hide();
+      }
+
+      
+
+      
+
+      
+
+      // Sidebar
+      function loadSidebarSekolah() {
+        let data = JSON.parse(localStorage.getItem("profilSekolah")) || {
+          nama: "Memuat...",
+        };
+        document.getElementById("sidebarNamaSekolah").innerText = data.nama;
+        document.getElementById("sidebarLogo").src =
+          data.logo || "img/default-logo.png";
+      }
+
+      function saveData(logo) {
+        let data = {
+          nama: document.getElementById("editNamaSekolah").value,
+          // ... field lainnya
+          logo: logo,
+        };
+        localStorage.setItem("profilSekolah", JSON.stringify(data));
+        loadProfilSekolah();
+        bootstrap.Modal.getInstance(
+          document.getElementById("modalEditProfil")
+        ).hide();
+        alert("Profil sekolah berhasil diperbarui!");
+      }
+
+      // Panggil setelah DOM siap
+      document.addEventListener("DOMContentLoaded", () => {
+        loadSidebarSekolah();
+      });
+    </script>
+perbaiki

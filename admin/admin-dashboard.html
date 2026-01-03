@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard Admin</title>
+
+    <!-- Bootstrap 5 + Icons -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="assets/css/style.css" />
+
+    <style>
+      .main-content {
+        margin-top: 70px;
+        margin-left: 250px;
+        padding: 20px;
+        transition: margin-left 0.3s ease;
+      }
+      .main-content.expand {
+        margin-left: 0;
+      }
+      .sidebar.closed {
+        margin-left: -250px;
+        transition: margin-left 0.3s ease;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-header text-center mb-3">
+        <img src="assets/img/logo-kpo.png" />
+        <h6 class="text-white fw-bold">KOMISI PEMILIHAN OSIS</h6>
+        <hr class="text-white mx-3" />
+      </div>
+
+      <a class="active" href="admin-dashboard.html"
+        ><i class="bi bi-speedometer2"></i> Beranda</a
+      >
+      <a href="data-pemilih.html"><i class="bi bi-people"></i> Data Pemilih</a>
+      <a href="kandidat.html"><i class="bi bi-person-badge"></i> Kandidat</a>
+      <a href="hasil-suara.html"><i class="bi bi-bar-chart"></i> Hasil Suara</a>
+      <a href="pengaturan.html"><i class="bi bi-gear"></i> Pengaturan</a>
+    </div>
+
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-light bg-white navbar-custom" id="navbar">
+      <div class="d-flex align-items-center">
+        <i
+          class="bi bi-list fs-3 me-3"
+          style="cursor: pointer"
+          onclick="toggleSidebar()"></i>
+        <span class="fs-5">Dashboard</span>
+      </div>
+      <div class="ms-auto d-flex align-items-center gap-3">
+        <span class="fw-bold" id="adminUser"></span>
+        <i class="bi bi-person-circle fs-4"></i>
+        <i
+          class="bi bi-box-arrow-right fs-4 text-danger"
+          onclick="logout()"
+          style="cursor: pointer"></i>
+      </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content" id="main">
+      <h3>Dashboard Admin</h3>
+      <!-- CARD STATISTIK -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-4">
+          <div class="card p-3 shadow-sm">
+            <h6>Total Pemilih</h6>
+            <h3 id="totalPemilih">0</h3>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card p-3 shadow-sm">
+            <h6>Total Suara Masuk</h6>
+            <h3 id="totalMasuk">0</h3>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card p-3 shadow-sm">
+            <h6>Total Suara Belum Masuk</h6>
+            <h3 id="totalBelum">0</h3>
+          </div>
+        </div>
+      </div>
+
+      <!-- INFORMASI KANDIDAT -->
+      <div class="card p-3 shadow-sm mb-4">
+        <h5 class="fw-semibold mb-2">Informasi Kandidat</h5>
+        <div id="dataKandidat">Memuat...</div>
+      </div>
+
+      <!-- GRAFIK SUARA -->
+      <div class="card p-3 shadow-sm mb-4">
+        <h5>Grafik Suara Realtime</h5>
+        <canvas id="chartSuara" height="130"></canvas>
+      </div>
+
+      <!-- WAKTU PELAKSANAAN -->
+      <div class="card p-3 shadow-sm">
+        <h5>Waktu Pelaksanaan</h5>
+        <h4 id="waktuRealtime">00:00:00</h4>
+      </div>
+    </div>
+
+    <!-- SCRIPT -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+      // ============================
+      // SIDEBAR & NAVBAR
+      // ============================
+      const sidebar = document.getElementById("sidebar");
+      const navbar = document.getElementById("navbar");
+      const main = document.getElementById("main");
+
+      function toggleSidebar() {
+        sidebar.classList.toggle("closed");
+        navbar.classList.toggle("expand");
+        main.classList.toggle("expand");
+      }
+
+      function logout() {
+        localStorage.removeItem("admin_login");
+        location.href = "admin-login.html";
+      }
+
+      let chartSuara; // global chart instance
+
+      // ============================
+      // INIT APP
+      // ============================
+      document.addEventListener("DOMContentLoaded", () => {
+        loadTotalPemilih();
+        loadSuaraMasuk();
+        loadKandidat();
+        loadChart();
+        loadWaktu();
+      });
+
+      // ============================
+      // STATISTIK PEMILIH & SUARA
+      // ============================
+      function loadTotalPemilih() {
+        const pemilih = JSON.parse(localStorage.getItem("pemilih")) || [];
+        document.getElementById("totalPemilih").innerText = pemilih.length;
+      }
+
+      function loadSuaraMasuk() {
+        const pemilih = JSON.parse(localStorage.getItem("pemilih")) || [];
+        let suara = JSON.parse(localStorage.getItem("suaraMasuk")) || [];
+
+        // hapus suara dari pemilih yang sudah tidak ada
+        suara = suara.filter((idPemilih) =>
+          pemilih.some((p) => p.id === idPemilih)
+        );
+
+        const totalMasuk = suara.length;
+        const totalBelum = pemilih.length - totalMasuk;
+
+        document.getElementById("totalMasuk").innerText = totalMasuk;
+        document.getElementById("totalBelum").innerText = totalBelum;
+      }
+
+      // ============================
+      // DATA KANDIDAT
+      // ============================
+      function loadKandidat() {
+        const kandidat = JSON.parse(localStorage.getItem("kandidat")) || [];
+        const box = document.getElementById("dataKandidat");
+        if (!box) return;
+
+        if (kandidat.length === 0) {
+          box.innerHTML = "<p class='text-muted'>Belum ada kandidat.</p>";
+          return;
+        }
+
+        box.innerHTML = kandidat
+          .map(
+            (k) => `
+      <div class="p-2 border rounded mb-2">
+        <strong>${k.nama}</strong><br>
+        Visi: ${k.visi}<br>
+        Misi: ${k.misi}
+      </div>
+    `
+          )
+          .join("");
+      }
+
+      // ============================
+      // GRAFIK SUARA
+      // ============================
+      function loadChart() {
+        const kandidat = JSON.parse(localStorage.getItem("kandidat")) || [];
+        const suara = JSON.parse(localStorage.getItem("suaraMasuk")) || [];
+        const hasil = kandidat.map(
+          (k) => suara.filter((s) => s === k.id).length
+        );
+
+        const ctx = document.getElementById("chartSuara");
+        if (!ctx) return;
+        if (chartSuara) chartSuara.destroy();
+
+        chartSuara = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: kandidat.map((k) => k.nama),
+            datasets: [
+              {
+                label: "Jumlah Suara",
+                data: hasil,
+                borderWidth: 1,
+                backgroundColor: "rgba(54,162,235,0.6)",
+              },
+            ],
+          },
+          options: { responsive: true, scales: { y: { beginAtZero: true } } },
+        });
+      }
+
+      // ============================
+      // WAKTU REALTIME
+      // ============================
+      function loadWaktu() {
+        setInterval(() => {
+          const now = new Date();
+          const waktu =
+            now.getHours().toString().padStart(2, "0") +
+            ":" +
+            now.getMinutes().toString().padStart(2, "0") +
+            ":" +
+            now.getSeconds().toString().padStart(2, "0");
+          document.getElementById("waktuRealtime").innerText = waktu;
+        }, 1000);
+      }
+
+      // Saat admin login berhasil
+      localStorage.setItem("admin_login", "true");
+      localStorage.setItem("admin_username", ""); // simpan username
+
+      // Ambil username admin dari localStorage
+      const adminUserSpan = document.getElementById("adminUser");
+      const usernameInput = localStorage.getItem("admin_username");
+
+      // Jika ada username, tampilkan
+      if (usernameInput) {
+        adminUserSpan.textContent = usernameInput;
+      } else {
+        adminUserSpan.textContent = "Admin"; // default jika tidak ada
+      }
+    </script>
+  </body>
+</html>

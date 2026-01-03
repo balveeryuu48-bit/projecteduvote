@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Data Kandidat</title>
+
+    <!-- Bootstrap -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="assets/css/style.css" />
+    <style>
+      /* Main Content */
+      .main-content {
+        margin-top: 70px;
+        margin-left: 250px;
+        padding: 20px;
+        transition: 0.3s ease;
+      }
+      .main-content.expand {
+        margin-left: 0;
+      }
+
+      .foto-kandidat {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 8px;
+      }
+
+      /* Drag handle */
+      .drag-handle {
+        cursor: grab;
+        font-size: 22px;
+      }
+      tr.dragging {
+        opacity: 0.4;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-header text-center mb-3">
+        <img src="assets/img/logo-kpo.png" />
+        <h6 class="text-white fw-bold">KOMISI PEMILIHAN OSIS</h6>
+        <hr class="text-white mx-3" />
+      </div>
+
+      <a href="admin-dashboard.html"
+        ><i class="bi bi-speedometer2"></i> Beranda</a
+      >
+      <a href="data-pemilih.html"><i class="bi bi-people"></i> Data Pemilih</a>
+      <a class="active" href="#"><i class="bi bi-person-badge"></i> Kandidat</a>
+      <a href="hasil-suara.html"><i class="bi bi-bar-chart"></i> Hasil Suara</a>
+      <a href="pengaturan.html"><i class="bi bi-gear"></i> Pengaturan</a>
+    </div>
+
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-light bg-white navbar-custom" id="navbar">
+      <div class="d-flex align-items-center">
+        <i
+          class="bi bi-list fs-3 me-3"
+          style="cursor: pointer"
+          onclick="toggleSidebar()"></i>
+        <span class="fs-5">Data Kandidat</span>
+      </div>
+
+      <div class="ms-auto d-flex align-items-center gap-3">
+        <span class="fw-bold">Admin</span>
+        <i class="bi bi-person-circle fs-4"></i>
+        <i
+          class="bi bi-box-arrow-right fs-4 text-danger"
+          onclick="logout()"
+          style="cursor: pointer"></i>
+      </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content" id="main">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4>Daftar Kandidat</h4>
+        <button
+          class="btn btn-primary"
+          data-bs-toggle="modal"
+          data-bs-target="#modalTambah">
+          <i class="bi bi-plus-circle"></i> Tambah Kandidat
+        </button>
+      </div>
+
+      <!-- TABLE -->
+      <div class="card">
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-striped align-middle" id="tabelKandidat">
+              <thead class="table-dark">
+                <tr>
+                  <th style="width: 40px"></th>
+                  <th>No</th>
+                  <th>Foto</th>
+                  <th>Nama</th>
+                  <th>Kelas</th>
+                  <th>Visi</th>
+                  <th>Misi</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="dataKandidat"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL TAMBAH -->
+    <div class="modal fade" id="modalTambah">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Tambah Kandidat</h5>
+            <button class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+
+          <div class="modal-body">
+            <label>Nama Kandidat</label>
+            <input id="namaKandidat" class="form-control mb-2" />
+
+            <label>Kelas</label>
+            <input id="kelasKandidat" class="form-control mb-2" />
+
+            <label>Visi</label>
+            <textarea id="visiKandidat" class="form-control mb-2"></textarea>
+
+            <label>Misi</label>
+            <textarea id="misiKandidat" class="form-control mb-2"></textarea>
+
+            <label>Foto</label>
+            <input type="file" id="fotoKandidat" class="form-control" />
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn btn-secondary" data-bs-dismiss="modal">
+              Batal
+            </button>
+            <button class="btn btn-primary" onclick="tambahKandidat()">
+              Simpan
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL EDIT -->
+    <div class="modal fade" id="modalEdit">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Edit Kandidat</h5>
+            <button class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+
+          <div class="modal-body">
+            <input type="hidden" id="editIndex" />
+
+            <label>Nama Kandidat</label>
+            <input id="editNama" class="form-control mb-2" />
+
+            <label>Kelas</label>
+            <input id="editKelas" class="form-control mb-2" />
+
+            <label>Visi</label>
+            <textarea id="editVisi" class="form-control mb-2"></textarea>
+
+            <label>Misi</label>
+            <textarea id="editMisi" class="form-control mb-2"></textarea>
+
+            <label>Foto (opsional)</label>
+            <input type="file" id="editFoto" class="form-control" />
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn btn-secondary" data-bs-dismiss="modal">
+              Batal
+            </button>
+            <button class="btn btn-primary" onclick="simpanEdit()">
+              Simpan Perubahan
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCRIPT -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+      const sidebar = document.getElementById("sidebar");
+      const navbar = document.getElementById("navbar");
+      const main = document.getElementById("main");
+
+      function toggleSidebar() {
+        sidebar.classList.toggle("closed");
+        navbar.classList.toggle("expand");
+        main.classList.toggle("expand");
+      }
+
+      function logout() {
+        localStorage.removeItem("admin_login");
+        location.href = "admin-login.html";
+      }
+
+      // Convert to base64
+      function toBase64(file) {
+        return new Promise((resolve, reject) => {
+          let reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = (error) => reject(error);
+        });
+      }
+
+      // LOAD KANDIDAT
+      function loadKandidat() {
+        let list = JSON.parse(localStorage.getItem("kandidat")) || [];
+        let tbody = document.getElementById("dataKandidat");
+        tbody.innerHTML = "";
+
+        list.forEach((k, i) => {
+          tbody.innerHTML += `
+          <tr draggable="true" data-index="${i}">
+            <td class="text-center drag-handle"><i class="bi bi-list"></i></td>
+            <td>${i + 1}</td>
+            <td><img src="${k.foto}" class="foto-kandidat"></td>
+            <td>${k.nama}</td>
+            <td>${k.kelas}</td>
+            <td>${k.visi}</td>
+            <td>${k.misi}</td>
+            <td>
+              <button class="btn btn-warning btn-sm" onclick="openEdit(${i})">
+                <i class="bi bi-pencil-square"></i>
+              </button>
+              <button class="btn btn-danger btn-sm" onclick="hapusKandidat(${i})">
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+        });
+
+        aktifkanDrag();
+      }
+
+      // TAMBAH KANDIDAT
+      async function tambahKandidat() {
+        let nama = document.getElementById("namaKandidat").value;
+        let kelas = document.getElementById("kelasKandidat").value;
+        let visi = document.getElementById("visiKandidat").value;
+        let misi = document.getElementById("misiKandidat").value;
+        let fotoFile = document.getElementById("fotoKandidat").files[0];
+
+        if (!nama || !kelas || !visi || !misi || !fotoFile) {
+          alert("Semua data wajib diisi!");
+          return;
+        }
+
+        let fotoBase64 = await toBase64(fotoFile);
+        let kandidat = JSON.parse(localStorage.getItem("kandidat")) || [];
+
+        kandidat.push({ nama, kelas, visi, misi, foto: fotoBase64 });
+
+        localStorage.setItem("kandidat", JSON.stringify(kandidat));
+
+        alert("Kandidat berhasil ditambahkan!");
+        location.reload();
+      }
+
+      // HAPUS
+      function hapusKandidat(i) {
+        if (!confirm("Hapus kandidat ini?")) return;
+        let kandidat = JSON.parse(localStorage.getItem("kandidat"));
+        kandidat.splice(i, 1);
+        localStorage.setItem("kandidat", JSON.stringify(kandidat));
+        loadKandidat();
+      }
+
+      // EDIT KANDIDAT
+      function openEdit(i) {
+        let k = JSON.parse(localStorage.getItem("kandidat"))[i];
+
+        document.getElementById("editIndex").value = i;
+        document.getElementById("editNama").value = k.nama;
+        document.getElementById("editKelas").value = k.kelas;
+        document.getElementById("editVisi").value = k.visi;
+        document.getElementById("editMisi").value = k.misi;
+
+        new bootstrap.Modal(document.getElementById("modalEdit")).show();
+      }
+
+      async function simpanEdit() {
+        let i = document.getElementById("editIndex").value;
+        let kandidat = JSON.parse(localStorage.getItem("kandidat"));
+
+        let nama = document.getElementById("editNama").value;
+        let kelas = document.getElementById("editKelas").value;
+        let visi = document.getElementById("editVisi").value;
+        let misi = document.getElementById("editMisi").value;
+        let fotoFile = document.getElementById("editFoto").files[0];
+
+        if (!nama || !kelas || !visi || !misi) {
+          alert("Semua data wajib diisi!");
+          return;
+        }
+
+        kandidat[i].nama = nama;
+        kandidat[i].kelas = kelas;
+        kandidat[i].visi = visi;
+        kandidat[i].misi = misi;
+
+        if (fotoFile) {
+          kandidat[i].foto = await toBase64(fotoFile);
+        }
+
+        localStorage.setItem("kandidat", JSON.stringify(kandidat));
+        alert("Data kandidat diperbarui!");
+        location.reload();
+      }
+
+      // DRAG & DROP UNTUK REORDER
+      function aktifkanDrag() {
+        const rows = document.querySelectorAll("#tabelKandidat tbody tr");
+
+        rows.forEach((row) => {
+          row.addEventListener("dragstart", () => {
+            row.classList.add("dragging");
+          });
+          row.addEventListener("dragend", () => {
+            row.classList.remove("dragging");
+            simpanUrutan();
+          });
+        });
+
+        const tbody = document.querySelector("#tabelKandidat tbody");
+
+        tbody.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          const dragging = document.querySelector(".dragging");
+          const afterElement = getDragAfterElement(tbody, e.clientY);
+          if (afterElement == null) {
+            tbody.appendChild(dragging);
+          } else {
+            tbody.insertBefore(dragging, afterElement);
+          }
+        });
+      }
+
+      function getDragAfterElement(container, y) {
+        const elements = [...container.querySelectorAll("tr:not(.dragging)")];
+        return elements.reduce(
+          (closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            if (offset < 0 && offset > closest.offset) {
+              return { offset, element: child };
+            } else {
+              return closest;
+            }
+          },
+          { offset: Number.NEGATIVE_INFINITY }
+        ).element;
+      }
+
+      // SIMPAN URUTAN KE LOCALSTORAGE
+      function simpanUrutan() {
+        const rows = document.querySelectorAll("#tabelKandidat tbody tr");
+        let kandidat = [];
+
+        rows.forEach((r) => {
+          let index = r.getAttribute("data-index");
+          kandidat.push(JSON.parse(localStorage.getItem("kandidat"))[index]);
+        });
+
+        localStorage.setItem("kandidat", JSON.stringify(kandidat));
+        loadKandidat();
+      }
+
+      loadKandidat();
+    </script>
+  </body>
+</html>

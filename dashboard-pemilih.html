@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard Pemilih</title>
+    <link rel="icon" href="admin/assets/img/logo-kpo.png" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet" />
+    <style>
+      body {
+        background-image: url("admin/assets/img/bg-website.jpg");
+        background-size: cover; /* menyesuaikan ukuran layar, menjaga proporsi */
+        background-repeat: no-repeat; /* mencegah pengulangan gambar */
+        background-position: center; /* posisi di tengah layar */
+      }
+
+      .card-kandidat {
+        transition: transform 0.2s, box-shadow 0.2s;
+        cursor: pointer;
+        text-align: center;
+      }
+      .card-kandidat:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+      }
+      .vote-btn[disabled] {
+        cursor: not-allowed;
+      }
+      .candidate-number {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: #0d6efd;
+        color: white;
+        font-weight: bold;
+        padding: 5px 10px;
+        border-radius: 50%;
+        font-size: 1rem;
+      }
+      .card-img-top {
+        width: 100%;
+        height: 250px; /* diperbesar dari 150px */
+        object-fit: cover; /* tetap proporsional dan menutupi area */
+        border-radius: 5px;
+        margin-bottom: 10px;
+      }
+
+      .overlay-alert {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #fff;
+        padding: 1.5rem 2rem;
+        border-radius: 10px;
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        z-index: 2000;
+        display: none;
+        text-align: center;
+      }
+      .overlay-alert.show {
+        display: block;
+        animation: fadeIn 0.3s ease-in-out;
+      }
+      .overlay-alert.success {
+        border-left: 5px solid #28a745;
+      }
+      .overlay-alert.warning {
+        border-left: 5px solid #ffc107;
+      }
+      .overlay-alert button {
+        margin-top: 0.5rem;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translate(-50%, -60%);
+        }
+        to {
+          opacity: 1;
+          transform: translate(-50%, -50%);
+        }
+      }
+    </style>
+  </head>
+  <body class="p-4">
+    <!-- Logout -->
+    <div class="d-flex justify-content-end mb-3">
+      <button id="logoutBtn" class="btn btn-danger">Logout</button>
+    </div>
+
+    <!-- Card Sambutan -->
+    <div class="card mb-3 shadow p-3 text-center">
+      <h3>
+        SELAMAT DATANG, <span id="namaPemilih"></span> DI BILIK SUARA DIGITAL.
+      </h3>
+      <p>NIS: <span id="nisPemilih"></span></p>
+      <h5>Suara anda demokrasi kita</h5>
+      <p class="text-muted">Silahkan pilih salah satu calon ketua OSIS!</p>
+    </div>
+
+    <!-- Card Kandidat -->
+    <div class="row g-3" id="listKandidat">Memuat kandidat...</div>
+
+    <!-- Overlay Alert -->
+    <div class="overlay-alert" id="overlayAlert">
+      <div id="overlayMessage"></div>
+      <button class="btn btn-sm btn-primary" onclick="closeAlert()">OK</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      // Ambil data pemilih
+      const user = JSON.parse(localStorage.getItem("pemilih_login"));
+      if (!user) window.location.href = "login.html";
+
+      document.getElementById("namaPemilih").innerText = user.nama;
+      document.getElementById("nisPemilih").innerText = user.nis;
+
+      // Logout
+      document.getElementById("logoutBtn").addEventListener("click", () => {
+        localStorage.removeItem("pemilih_login");
+        window.location.href = "login.html";
+      });
+
+      // Load kandidat
+      function loadKandidat() {
+        const kandidat = JSON.parse(localStorage.getItem("kandidat")) || [];
+        const suara = JSON.parse(localStorage.getItem("suaraMasuk")) || [];
+        const list = document.getElementById("listKandidat");
+
+        if (kandidat.length === 0) {
+          list.innerHTML = "<p class='text-muted'>Belum ada kandidat.</p>";
+          return;
+        }
+
+        const sudahMemilih = suara.some((s) => s.nis === user.nis);
+
+        list.innerHTML = kandidat
+          .map(
+            (k, index) => `
+        <div class="col-md-4">
+          <div class="card card-kandidat p-3 shadow position-relative">
+            <div class="candidate-number">${index + 1}</div>
+            <img src="${
+              k.foto || "img/default-logo.png"
+            }" class="card-img-top" alt="${k.nama}">
+            <div class="card-body">
+              <h6 class="card-title fw-bold">${k.nama}</h6>
+              <p class="card-text"><strong>Visi:</strong> ${k.visi}</p>
+              <p class="card-text"><strong>Misi:</strong> ${k.misi}</p>
+              ${
+                sudahMemilih
+                  ? `<span class="badge bg-success">Sudah Memilih</span>`
+                  : `<button class="btn btn-primary vote-btn w-100" onclick="vote('${k.id}')">Pilih</button>`
+              }
+            </div>
+          </div>
+        </div>
+      `
+          )
+          .join("");
+      }
+
+      function vote(kandidatId) {
+        const suara = JSON.parse(localStorage.getItem("suaraMasuk")) || [];
+        if (suara.some((s) => s.nis === user.nis)) {
+          showAlert("Anda sudah memilih sebelumnya!", "warning");
+          return;
+        }
+        suara.push({ nis: user.nis, id: kandidatId });
+        localStorage.setItem("suaraMasuk", JSON.stringify(suara));
+        showAlert("Terima kasih, suara Anda telah dicatat!", "success");
+        loadKandidat();
+      }
+
+      // Overlay alert
+      function showAlert(message, type = "info") {
+        const overlay = document.getElementById("overlayAlert");
+        document.getElementById("overlayMessage").innerText = message;
+        overlay.className = `overlay-alert show ${type}`;
+      }
+
+      function closeAlert() {
+        document.getElementById("overlayAlert").classList.remove("show");
+      }
+
+      loadKandidat();
+    </script>
+  </body>
+</html>
