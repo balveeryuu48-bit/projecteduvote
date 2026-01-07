@@ -143,3 +143,9 @@ function updateSidebarLogo(logo, nama) {
     document.getElementById("sidebarNamaSekolah").innerText =
       nama || "Memuat...";
 }
+function pilih(namaKandidat) {
+  let suara = JSON.parse(localStorage.getItem("suaraMasuk")) || {};
+  suara[namaKandidat] = (suara[namaKandidat] || 0) + 1;
+  localStorage.setItem("suaraMasuk", JSON.stringify(suara));
+  console.log("Suara tersimpan:", suara);
+}
