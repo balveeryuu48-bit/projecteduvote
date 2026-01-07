@@ -126,14 +126,12 @@
       });
 
       // Load kandidat
-      function loadKandidat() {
-        const kandidat = JSON.parse(localStorage.getItem("kandidat")) || [];
-        const suara = JSON.parse(localStorage.getItem("suaraMasuk")) || [];
-        const list = document.getElementById("listKandidat");
-
-        if (kandidat.length === 0) {
-          list.innerHTML = "<p class='text-muted'>Belum ada kandidat.</p>";
-          return;
+      function vote(namaKandidat) {
+        let suara = JSON.parse(localStorage.getItem("suaraMasuk")) || {};
+        suara[namaKandidat] = (suara[namaKandidat] || 0) + 1; 
+        localStorage.setItem("suaraMasuk", JSON.stringify(suara));
+        showAlert("Anda sudah memilih sebelumnya!", "warning");
+        
         }
 
         const sudahMemilih = suara.some((s) => s.nis === user.nis);
