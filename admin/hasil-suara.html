@@ -12,56 +12,8 @@
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="assets/css/style.css" />
     <style>
-      /* Sidebar */
-      .sidebar {
-        height: 100%;
-        width: 250px;
-        position: fixed;
-        z-index: 1;
-        top: 0;
-        left: 0;
-        background-color: #0d6efd;
-        overflow-x: hidden;
-        padding-top: 20px;
-        transition: 0.3s;
-      }
-      .sidebar.closed {
-        margin-left: -250px;
-      }
-      .sidebar a {
-        padding: 10px 15px;
-        text-decoration: none;
-        font-size: 18px;
-        color: white;
-        display: block;
-        transition: 0.3s;
-      }
-      .sidebar a:hover, .sidebar a.active {
-        background-color: #0b5ed7;
-        color: white;
-      }
-      .sidebar-header img {
-        width: 80px;
-        height: auto;
-        margin-bottom: 10px;
-      }
-      
-      /* Navbar */
-      .navbar-custom {
-        position: fixed;
-        top: 0;
-        right: 0;
-        left: 250px;
-        z-index: 1030;
-        padding: 10px 20px;
-        box-shadow: 0 2px 4px rgba(0,0,0,.1);
-        transition: left 0.3s ease;
-      }
-      .navbar-custom.expand {
-        left: 0;
-      }
-      
       /* Main Content */
       .main-content {
         margin-top: 70px;
@@ -123,48 +75,21 @@
     <div class="main-content" id="main">
       <h4 class="mb-3">Hasil Perolehan Suara</h4>
 
-      <!-- STATISTIK -->
-      <div class="row mb-4">
-        <div class="col-md-4">
-          <div class="card p-3 shadow-sm">
-            <h6>Total Pemilih</h6>
-            <h3 id="totalPemilih">0</h3>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="card p-3 shadow-sm">
-            <h6>Total Suara Masuk</h6>
-            <h3 id="totalSuara">0</h3>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="card p-3 shadow-sm">
-            <h6>Persentase Partisipasi</h6>
-            <h3 id="persentase">0%</h3>
-          </div>
-        </div>
-      </div>
-
       <!-- TABLE HASIL -->
       <div class="card mb-4">
         <div class="card-body">
-          <div class="table-responsive">
-            <table class="table table-striped align-middle">
-              <thead class="table-dark">
-                <tr>
-                  <th>No</th>
-                  <th>Foto</th>
-                  <th>Nama Kandidat</th>
-                  <th>Visi</th>
-                  <th>Jumlah Suara</th>
-                  <th>Persentase</th>
-                </tr>
-              </thead>
-              <tbody id="tabelHasil">
-                <tr><td colspan="6" class="text-center">Memuat data...</td></tr>
-              </tbody>
-            </table>
-          </div>
+          <table class="table table-striped align-middle">
+            <thead class="table-dark">
+              <tr>
+                <th>No</th>
+                <th>Foto</th>
+                <th>Nama</th>
+                <th>Kelas</th>
+                <th>Suara</th>
+              </tr>
+            </thead>
+            <tbody id="tabelHasil"></tbody>
+          </table>
         </div>
       </div>
 
@@ -172,7 +97,7 @@
       <div class="card">
         <div class="card-body">
           <h5>Grafik Perolehan Suara</h5>
-          <canvas id="chartSuara" height="100"></canvas>
+          <canvas id="chartSuara" height="130"></canvas>
         </div>
       </div>
     </div>
@@ -185,7 +110,6 @@
       const sidebar = document.getElementById("sidebar");
       const navbar = document.getElementById("navbar");
       const main = document.getElementById("main");
-      let chartInstance = null;
 
       function toggleSidebar() {
         sidebar.classList.toggle("closed");
@@ -198,189 +122,60 @@
         location.href = "admin-login.html";
       }
 
-      // DEBUG FUNCTION - untuk melihat data sebenarnya
-      function debugData() {
-        console.log("=== DEBUG DATA ===");
-        const kandidat = JSON.parse(localStorage.getItem("kandidat")) || [];
-        const suara = JSON.parse(localStorage.getItem("suaraMasuk")) || [];
-        const pemilih = JSON.parse(localStorage.getItem("pemilih")) || [];
-        
-        console.log("Kandidat:", kandidat);
-        console.log("Suara (format sebenarnya):", suara);
-        console.log("Pemilih:", pemilih);
-        
-        // Tampilkan jumlah suara per kandidat
-        kandidat.forEach(k => {
-          const jumlah = suara.filter(s => s.idKandidat === k.id).length;
-          console.log(`${k.nama} (ID: ${k.id}): ${jumlah} suara`);
-        });
-        
-        alert("Data debug ditampilkan di console (F12)");
-      }
-
-      // LOAD DATA HASIL - DIPERBAIKI
+      // LOAD DATA HASIL
       function loadHasil() {
-        // Ambil data dari localStorage dengan format yang benar
-        const kandidat = JSON.parse(localStorage.getItem("kandidat")) || [];
-        const suara = JSON.parse(localStorage.getItem("suaraMasuk")) || []; // Array of objects
-        const pemilih = JSON.parse(localStorage.getItem("pemilih")) || [];
-        
-        console.log("Jumlah kandidat:", kandidat.length);
-        console.log("Jumlah suara:", suara.length);
-        
-        // Update statistik
-        document.getElementById("totalPemilih").innerText = pemilih.length;
-        document.getElementById("totalSuara").innerText = suara.length;
-        
-        // Hitung persentase partisipasi
-        const persentasePartisipasi = pemilih.length > 0 
-          ? Math.round((suara.length / pemilih.length) * 100) 
-          : 0;
-        document.getElementById("persentase").innerText = persentasePartisipasi + "%";
-        
+        let kandidat = JSON.parse(localStorage.getItem("kandidat")) || [];
+        let suara = JSON.parse(localStorage.getItem("suaraMasuk")) || {};
+        // format: { "nama_kandidat": jumlahSuara }
+
         let tbody = document.getElementById("tabelHasil");
-        
-        if (kandidat.length === 0) {
-          tbody.innerHTML = `
-            <tr>
-              <td colspan="6" class="text-center text-muted">
-                Belum ada data kandidat
-              </td>
-            </tr>
-          `;
-          buatChart([], []);
-          return;
-        }
-        
-        // Hitung total semua suara untuk persentase
-        const totalSemuaSuara = suara.length;
-        
-        // Generate baris tabel
-        let rows = '';
-        
+        tbody.innerHTML = "";
+
         kandidat.forEach((k, i) => {
-          // HITUNG SUARA YANG BENAR: filter berdasarkan idKandidat
-          const jumlahSuara = suara.filter(s => s.idKandidat === k.id).length;
-          
-          // Hitung persentase
-          const persentase = totalSemuaSuara > 0 
-            ? ((jumlahSuara / totalSemuaSuara) * 100).toFixed(1) 
-            : "0.0";
-          
-          rows += `
+          let total = suara[k.nama] || 0;
+
+          tbody.innerHTML += `
             <tr>
               <td>${i + 1}</td>
-              <td>
-                <img src="${k.foto || 'assets/img/default-logo.png'}" 
-                     class="foto-kandidat" 
-                     alt="${k.nama}"
-                     onerror="this.src='assets/img/default-logo.png'">
-              </td>
-              <td><strong>${k.nama}</strong></td>
-              <td>${k.visi || '-'}</td>
-              <td>
-                <span class="fw-bold text-primary">${jumlahSuara}</span> suara
-              </td>
-              <td>
-                <span class="badge bg-info">${persentase}%</span>
-              </td>
+              <td><img src="${k.foto}" class="foto-kandidat"></td>
+              <td>${k.nama}</td>
+              <td>${k.kelas}</td>
+              <td><span class="fw-bold text-primary">${total}</span></td>
             </tr>
           `;
         });
-        
-        tbody.innerHTML = rows;
-        
-        // Buat chart
+
         buatChart(kandidat, suara);
-        
-        // Auto refresh setiap 3 detik
-        setTimeout(loadHasil, 3000);
       }
 
-      // GRAFIK - DIPERBAIKI
+      // GRAFIK
       function buatChart(kandidat, suara) {
         let ctx = document.getElementById("chartSuara");
-        
-        if (!ctx) return;
-        
-        // Hancurkan chart lama jika ada
-        if (chartInstance) {
-          chartInstance.destroy();
-        }
-        
-        // Siapkan data untuk chart - HITUNG SUARA BERDASARKAN idKandidat
+
         let labels = kandidat.map((k) => k.nama);
-        let data = kandidat.map((k) => {
-          return suara.filter(s => s.idKandidat === k.id).length;
-        });
-        
-        // Warna untuk chart
-        const colors = [
-          'rgba(255, 99, 132, 0.7)',
-          'rgba(54, 162, 235, 0.7)',
-          'rgba(255, 206, 86, 0.7)',
-          'rgba(75, 192, 192, 0.7)',
-          'rgba(153, 102, 255, 0.7)'
-        ];
-        
-        // Buat chart baru
-        chartInstance = new Chart(ctx, {
+        let data = kandidat.map((k) => suara[k.nama] || 0);
+
+        new Chart(ctx, {
           type: "bar",
           data: {
             labels: labels,
             datasets: [
               {
-                label: "Jumlah Suara",
+                label: "Total Suara",
                 data: data,
-                backgroundColor: colors.slice(0, kandidat.length),
-                borderColor: colors.map(c => c.replace('0.7', '1')),
-                borderWidth: 1
-              }
-            ]
+              },
+            ],
           },
           options: {
             responsive: true,
             scales: {
-              y: { 
-                beginAtZero: true,
-                ticks: {
-                  stepSize: 1
-                }
-              }
-            }
-          }
+              y: { beginAtZero: true },
+            },
+          },
         });
       }
 
-      // Load data saat halaman dibuka
-      document.addEventListener('DOMContentLoaded', function() {
-        // Tambahkan tombol debug untuk testing
-        const debugBtn = document.createElement('button');
-        debugBtn.className = 'btn btn-sm btn-warning position-fixed';
-        debugBtn.style.bottom = '20px';
-        debugBtn.style.right = '20px';
-        debugBtn.style.zIndex = '1000';
-        debugBtn.innerHTML = '<i class="bi bi-bug"></i> Debug';
-        debugBtn.onclick = debugData;
-        document.body.appendChild(debugBtn);
-        
-        // Load data hasil
-        loadHasil();
-        
-        // Log data untuk debugging
-        console.log("=== HASIL SUARA LOADED ===");
-        const suara = JSON.parse(localStorage.getItem("suaraMasuk")) || [];
-        console.log("Data suaraMasuk:", suara);
-        
-        // Jika tidak ada suara, beri petunjuk
-        if (suara.length === 0) {
-          console.log("INFO: Belum ada suara yang masuk.");
-          console.log("Cara testing:");
-          console.log("1. Login sebagai pemilih (dashboard-pemilih.html)");
-          console.log("2. Pilih kandidat");
-          console.log("3. Refresh halaman ini");
-        }
-      });
+      loadHasil();
     </script>
   </body>
 </html>
