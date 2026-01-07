@@ -11,11 +11,10 @@
     <style>
       body {
         background-image: url("admin/assets/img/bg-website.jpg");
-        background-size: cover; /* menyesuaikan ukuran layar, menjaga proporsi */
-        background-repeat: no-repeat; /* mencegah pengulangan gambar */
-        background-position: center; /* posisi di tengah layar */
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: center;
       }
-
       .card-kandidat {
         transition: transform 0.2s, box-shadow 0.2s;
         cursor: pointer;
@@ -41,12 +40,11 @@
       }
       .card-img-top {
         width: 100%;
-        height: 250px; /* diperbesar dari 150px */
-        object-fit: cover; /* tetap proporsional dan menutupi area */
+        height: 250px;
+        object-fit: cover;
         border-radius: 5px;
         margin-bottom: 10px;
       }
-
       .overlay-alert {
         position: fixed;
         top: 50%;
@@ -145,7 +143,7 @@
           <div class="card card-kandidat p-3 shadow position-relative">
             <div class="candidate-number">${index + 1}</div>
             <img src="${
-              k.foto || "img/default-logo.png"
+              k.foto || "admin/assets/img/default-logo.png"
             }" class="card-img-top" alt="${k.nama}">
             <div class="card-body">
               <h6 class="card-title fw-bold">${k.nama}</h6>
@@ -164,13 +162,21 @@
           .join("");
       }
 
+      // FUNGSI VOTE YANG DIPERBAIKI
       function vote(kandidatId) {
         const suara = JSON.parse(localStorage.getItem("suaraMasuk")) || [];
         if (suara.some((s) => s.nis === user.nis)) {
           showAlert("Anda sudah memilih sebelumnya!", "warning");
           return;
         }
-        suara.push({ nis: user.nis, id: kandidatId });
+        
+        // Simpan dengan struktur yang benar
+        suara.push({ 
+          nis: user.nis, 
+          idKandidat: kandidatId,  // PERUBAHAN: idKandidat bukan id
+          waktu: new Date().toISOString()
+        });
+        
         localStorage.setItem("suaraMasuk", JSON.stringify(suara));
         showAlert("Terima kasih, suara Anda telah dicatat!", "success");
         loadKandidat();
