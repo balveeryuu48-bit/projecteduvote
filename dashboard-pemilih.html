@@ -126,12 +126,14 @@
       });
 
       // Load kandidat
-      function vote(namaKandidat) {
-        let suara = JSON.parse(localStorage.getItem("suaraMasuk")) || {};
-        suara[namaKandidat] = (suara[namaKandidat] || 0) + 1; 
-        localStorage.setItem("suaraMasuk", JSON.stringify(suara));
-        showAlert("Anda sudah memilih sebelumnya!", "warning");
-        
+      function loadKandidat() {
+        const kandidat = JSON.parse(localStorage.getItem("kandidat")) || [];
+        const suara = JSON.parse(localStorage.getItem("suaraMasuk")) || [];
+        const list = document.getElementById("listKandidat");
+
+        if (kandidat.length === 0) {
+          list.innerHTML = "<p class='text-muted'>Belum ada kandidat.</p>";
+          return;
         }
 
         const sudahMemilih = suara.some((s) => s.nis === user.nis);
@@ -152,7 +154,7 @@
               ${
                 sudahMemilih
                   ? `<span class="badge bg-success">Sudah Memilih</span>`
-                  : `<button class="btn btn-primary vote-btn w-100" onclick="vote('${k.nama}')">Pilih</button>`
+                  : `<button class="btn btn-primary vote-btn w-100" onclick="vote('${k.id}')">Pilih</button>`
               }
             </div>
           </div>
@@ -168,7 +170,7 @@
           showAlert("Anda sudah memilih sebelumnya!", "warning");
           return;
         }
-        suara.push({ nis: user.nis, nama: kandidatnama });
+        suara.push({ nis: user.nis, id: kandidatId });
         localStorage.setItem("suaraMasuk", JSON.stringify(suara));
         showAlert("Terima kasih, suara Anda telah dicatat!", "success");
         loadKandidat();
