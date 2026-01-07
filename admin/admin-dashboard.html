@@ -4,16 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dashboard Admin</title>
-
-    <!-- Bootstrap 5 + Icons -->
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
       rel="stylesheet" />
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
-    <link rel="stylesheet" href="assets/css/style.css" />
-
     <style>
       .main-content {
         margin-top: 70px;
@@ -24,9 +20,50 @@
       .main-content.expand {
         margin-left: 0;
       }
+      .sidebar {
+        height: 100%;
+        width: 250px;
+        position: fixed;
+        z-index: 1;
+        top: 0;
+        left: 0;
+        background-color: #0d6efd;
+        overflow-x: hidden;
+        padding-top: 20px;
+        transition: 0.3s;
+      }
       .sidebar.closed {
         margin-left: -250px;
-        transition: margin-left 0.3s ease;
+      }
+      .sidebar a {
+        padding: 10px 15px;
+        text-decoration: none;
+        font-size: 18px;
+        color: white;
+        display: block;
+        transition: 0.3s;
+      }
+      .sidebar a:hover, .sidebar a.active {
+        background-color: #0b5ed7;
+        color: white;
+      }
+      .sidebar-header img {
+        width: 80px;
+        height: auto;
+        margin-bottom: 10px;
+      }
+      .navbar-custom {
+        position: fixed;
+        top: 0;
+        right: 0;
+        left: 250px;
+        z-index: 1030;
+        padding: 10px 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,.1);
+        transition: left 0.3s ease;
+      }
+      .navbar-custom.expand {
+        left: 0;
       }
     </style>
   </head>
@@ -55,10 +92,10 @@
           class="bi bi-list fs-3 me-3"
           style="cursor: pointer"
           onclick="toggleSidebar()"></i>
-        <span class="fs-5">Dashboard</span>
+        <span class="fs-5">Dashboard Admin</span>
       </div>
       <div class="ms-auto d-flex align-items-center gap-3">
-        <span class="fw-bold" id="adminUser"></span>
+        <span class="fw-bold" id="adminUser">Admin</span>
         <i class="bi bi-person-circle fs-4"></i>
         <i
           class="bi bi-box-arrow-right fs-4 text-danger"
@@ -70,6 +107,7 @@
     <!-- MAIN CONTENT -->
     <div class="main-content" id="main">
       <h3>Dashboard Admin</h3>
+      
       <!-- CARD STATISTIK -->
       <div class="row g-3 mb-4">
         <div class="col-md-4">
@@ -133,7 +171,7 @@
         location.href = "admin-login.html";
       }
 
-      let chartSuara; // global chart instance
+      let chartSuara;
 
       // ============================
       // INIT APP
@@ -144,10 +182,16 @@
         loadKandidat();
         loadChart();
         loadWaktu();
+        
+        // Auto refresh setiap 3 detik
+        setInterval(() => {
+          loadSuaraMasuk();
+          loadChart();
+        }, 3000);
       });
 
       // ============================
-      // STATISTIK PEMILIH & SUARA
+      // STATISTIK PEMILIH & SUARA - DIPERBAIKI
       // ============================
       function loadTotalPemilih() {
         const pemilih = JSON.parse(localStorage.getItem("pemilih")) || [];
@@ -158,16 +202,17 @@
         const pemilih = JSON.parse(localStorage.getItem("pemilih")) || [];
         let suara = JSON.parse(localStorage.getItem("suaraMasuk")) || [];
 
-        // hapus suara dari pemilih yang sudah tidak ada
-        suara = suara.filter((idPemilih) =>
-          pemilih.some((p) => p.id === idPemilih)
-        );
+        // Filter suara dari pemilih yang valid
+        const nisPemilihValid = pemilih.map(p => p.nis);
+        const suaraValid = suara.filter(s => nisPemilihValid.includes(s.nis));
 
-        const totalMasuk = suara.length;
+        const totalMasuk = suaraValid.length;
         const totalBelum = pemilih.length - totalMasuk;
 
         document.getElementById("totalMasuk").innerText = totalMasuk;
         document.getElementById("totalBelum").innerText = totalBelum;
+        
+        return suaraValid;
       }
 
       // ============================
@@ -176,7 +221,6 @@
       function loadKandidat() {
         const kandidat = JSON.parse(localStorage.getItem("kandidat")) || [];
         const box = document.getElementById("dataKandidat");
-        if (!box) return;
 
         if (kandidat.length === 0) {
           box.innerHTML = "<p class='text-muted'>Belum ada kandidat.</p>";
@@ -186,44 +230,68 @@
         box.innerHTML = kandidat
           .map(
             (k) => `
-      <div class="p-2 border rounded mb-2">
-        <strong>${k.nama}</strong><br>
-        Visi: ${k.visi}<br>
-        Misi: ${k.misi}
-      </div>
-    `
+          <div class="p-2 border rounded mb-2">
+            <strong>${k.nama}</strong><br>
+            Visi: ${k.visi}<br>
+            Misi: ${k.misi}
+          </div>
+        `
           )
           .join("");
       }
 
       // ============================
-      // GRAFIK SUARA
+      // GRAFIK SUARA - DIPERBAIKI
       // ============================
       function loadChart() {
         const kandidat = JSON.parse(localStorage.getItem("kandidat")) || [];
         const suara = JSON.parse(localStorage.getItem("suaraMasuk")) || [];
-        const hasil = kandidat.map(
-          (k) => suara.filter((s) => s === k.id).length
-        );
+        
+        // Hitung suara per kandidat
+        const hasil = kandidat.map(k => {
+          return suara.filter(s => s.idKandidat === k.id).length;
+        });
 
         const ctx = document.getElementById("chartSuara");
         if (!ctx) return;
+        
         if (chartSuara) chartSuara.destroy();
 
         chartSuara = new Chart(ctx, {
-          type: "bar",
+          type: 'bar',
           data: {
-            labels: kandidat.map((k) => k.nama),
-            datasets: [
-              {
-                label: "Jumlah Suara",
-                data: hasil,
-                borderWidth: 1,
-                backgroundColor: "rgba(54,162,235,0.6)",
-              },
-            ],
+            labels: kandidat.map(k => k.nama),
+            datasets: [{
+              label: 'Jumlah Suara',
+              data: hasil,
+              backgroundColor: [
+                'rgba(255, 99, 132, 0.6)',
+                'rgba(54, 162, 235, 0.6)',
+                'rgba(255, 206, 86, 0.6)',
+                'rgba(75, 192, 192, 0.6)',
+                'rgba(153, 102, 255, 0.6)'
+              ],
+              borderColor: [
+                'rgba(255, 99, 132, 1)',
+                'rgba(54, 162, 235, 1)',
+                'rgba(255, 206, 86, 1)',
+                'rgba(75, 192, 192, 1)',
+                'rgba(153, 102, 255, 1)'
+              ],
+              borderWidth: 1
+            }]
           },
-          options: { responsive: true, scales: { y: { beginAtZero: true } } },
+          options: {
+            responsive: true,
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  stepSize: 1
+                }
+              }
+            }
+          }
         });
       }
 
@@ -241,21 +309,6 @@
             now.getSeconds().toString().padStart(2, "0");
           document.getElementById("waktuRealtime").innerText = waktu;
         }, 1000);
-      }
-
-      // Saat admin login berhasil
-      localStorage.setItem("admin_login", "true");
-      localStorage.setItem("admin_username", ""); // simpan username
-
-      // Ambil username admin dari localStorage
-      const adminUserSpan = document.getElementById("adminUser");
-      const usernameInput = localStorage.getItem("admin_username");
-
-      // Jika ada username, tampilkan
-      if (usernameInput) {
-        adminUserSpan.textContent = usernameInput;
-      } else {
-        adminUserSpan.textContent = "Admin"; // default jika tidak ada
       }
     </script>
   </body>
