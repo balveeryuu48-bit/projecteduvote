@@ -122,40 +122,85 @@
         location.href = "admin-login.html";
       }
 
-      // LOAD DATA HASIL
+      // DEBUG: Fungsi untuk melihat data sebenarnya
+      function debugData() {
+        const kandidat = JSON.parse(localStorage.getItem("kandidat")) || [];
+        const suara = JSON.parse(localStorage.getItem("suaraMasuk")) || [];
+        
+        console.log("=== DEBUG DATA HASIL SUARA ===");
+        console.log("Kandidat:", kandidat);
+        console.log("Suara Masuk (format asli):", suara);
+        console.log("Jumlah total suara:", suara.length);
+        
+        // Hitung suara per kandidat
+        kandidat.forEach(k => {
+          const jumlah = suara.filter(s => s.idKandidat === k.id).length;
+          console.log(`${k.nama} (ID: ${k.id}): ${jumlah} suara`);
+        });
+        
+        alert("Lihat console (F12) untuk data debug");
+      }
+
+      // LOAD DATA HASIL - DIPERBAIKI
       function loadHasil() {
-        let kandidat = JSON.parse(localStorage.getItem("kandidat")) || [];
-        let suara = JSON.parse(localStorage.getItem("suaraMasuk")) || {};
-        // format: { "nama_kandidat": jumlahSuara }
+        // Ambil data dengan format yang benar
+        const kandidat = JSON.parse(localStorage.getItem("kandidat")) || [];
+        const suara = JSON.parse(localStorage.getItem("suaraMasuk")) || []; // Ini ARRAY, bukan OBJECT
+        
+        console.log("Data suara yang diterima:", suara);
+        console.log("Tipe data suara:", typeof suara);
+        console.log("Is array?", Array.isArray(suara));
 
         let tbody = document.getElementById("tabelHasil");
         tbody.innerHTML = "";
 
+        // Hitung suara untuk setiap kandidat
         kandidat.forEach((k, i) => {
-          let total = suara[k.nama] || 0;
+          // CARA BENAR: Hitung berapa banyak suara yang punya idKandidat sama dengan id kandidat
+          const totalSuara = suara.filter(item => item.idKandidat === k.id).length;
+          
+          console.log(`${k.nama}: ${totalSuara} suara (mencari idKandidat: ${k.id})`);
 
           tbody.innerHTML += `
             <tr>
               <td>${i + 1}</td>
-              <td><img src="${k.foto}" class="foto-kandidat"></td>
+              <td><img src="${k.foto || 'assets/img/default-logo.png'}" class="foto-kandidat" 
+                   onerror="this.src='assets/img/default-logo.png'"></td>
               <td>${k.nama}</td>
-              <td>${k.kelas}</td>
-              <td><span class="fw-bold text-primary">${total}</span></td>
+              <td>${k.kelas || 'XI'}</td>
+              <td><span class="fw-bold text-primary">${totalSuara}</span></td>
             </tr>
           `;
         });
 
+        // Buat grafik dengan data yang benar
         buatChart(kandidat, suara);
+        
+        // Auto-refresh setiap 3 detik
+        setTimeout(loadHasil, 3000);
       }
 
-      // GRAFIK
+      // GRAFIK - DIPERBAIKI
       function buatChart(kandidat, suara) {
         let ctx = document.getElementById("chartSuara");
+        
+        // Hancurkan chart lama jika ada
+        if (window.chartInstance) {
+          window.chartInstance.destroy();
+        }
 
+        // Siapkan data untuk chart
         let labels = kandidat.map((k) => k.nama);
-        let data = kandidat.map((k) => suara[k.nama] || 0);
+        let data = kandidat.map((k) => {
+          // Hitung suara untuk setiap kandidat
+          return suara.filter(item => item.idKandidat === k.id).length;
+        });
 
-        new Chart(ctx, {
+        console.log("Data untuk chart - Labels:", labels);
+        console.log("Data untuk chart - Values:", data);
+
+        // Buat chart baru
+        window.chartInstance = new Chart(ctx, {
           type: "bar",
           data: {
             labels: labels,
@@ -163,19 +208,62 @@
               {
                 label: "Total Suara",
                 data: data,
-              },
-            ],
+                backgroundColor: [
+                  'rgba(255, 99, 132, 0.7)',
+                  'rgba(54, 162, 235, 0.7)',
+                  'rgba(255, 206, 86, 0.7)',
+                  'rgba(75, 192, 192, 0.7)',
+                  'rgba(153, 102, 255, 0.7)'
+                ],
+                borderColor: [
+                  'rgba(255, 99, 132, 1)',
+                  'rgba(54, 162, 235, 1)',
+                  'rgba(255, 206, 86, 1)',
+                  'rgba(75, 192, 192, 1)',
+                  'rgba(153, 102, 255, 1)'
+                ],
+                borderWidth: 1
+              }
+            ]
           },
           options: {
             responsive: true,
             scales: {
-              y: { beginAtZero: true },
-            },
-          },
+              y: { 
+                beginAtZero: true,
+                ticks: {
+                  stepSize: 1
+                }
+              }
+            }
+          }
         });
       }
 
-      loadHasil();
+      // Load data saat halaman dibuka
+      document.addEventListener('DOMContentLoaded', function() {
+        // Tambahkan tombol debug
+        const debugBtn = document.createElement('button');
+        debugBtn.className = 'btn btn-sm btn-warning position-fixed';
+        debugBtn.style.bottom = '20px';
+        debugBtn.style.right = '20px';
+        debugBtn.style.zIndex = '1000';
+        debugBtn.innerHTML = '<i class="bi bi-bug"></i> Debug';
+        debugBtn.onclick = debugData;
+        document.body.appendChild(debugBtn);
+        
+        // Load data
+        loadHasil();
+        
+        // Cek data
+        const suara = JSON.parse(localStorage.getItem("suaraMasuk")) || [];
+        console.log("Total suara di localStorage:", suara.length);
+        
+        if (suara.length === 0) {
+          console.log("INFO: Tidak ada suara di localStorage");
+          console.log("Pastikan sudah memilih di dashboard pemilih");
+        }
+      });
     </script>
   </body>
 </html>
