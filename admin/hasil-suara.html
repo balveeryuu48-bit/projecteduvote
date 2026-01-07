@@ -79,13 +79,6 @@
         object-fit: cover;
         border-radius: 8px;
       }
-      
-      /* Chart colors */
-      .chart-container {
-        position: relative;
-        height: 300px;
-        width: 100%;
-      }
     </style>
   </head>
 
@@ -129,8 +122,8 @@
     <!-- MAIN CONTENT -->
     <div class="main-content" id="main">
       <h4 class="mb-3">Hasil Perolehan Suara</h4>
-      
-      <!-- STATISTIK CEPAT -->
+
+      <!-- STATISTIK -->
       <div class="row mb-4">
         <div class="col-md-4">
           <div class="card p-3 shadow-sm">
@@ -179,20 +172,7 @@
       <div class="card">
         <div class="card-body">
           <h5>Grafik Perolehan Suara</h5>
-          <div class="chart-container">
-            <canvas id="chartSuara"></canvas>
-          </div>
-        </div>
-      </div>
-      
-      <!-- INFO DEBUG -->
-      <div class="card mt-4">
-        <div class="card-body">
-          <h6>Informasi Debug</h6>
-          <button class="btn btn-sm btn-secondary" onclick="debugData()">
-            Tampilkan Data Debug
-          </button>
-          <div id="debugInfo" class="mt-2 small text-muted"></div>
+          <canvas id="chartSuara" height="100"></canvas>
         </div>
       </div>
     </div>
@@ -202,12 +182,10 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
-      // Variabel global untuk chart
-      let chartInstance = null;
-      
       const sidebar = document.getElementById("sidebar");
       const navbar = document.getElementById("navbar");
       const main = document.getElementById("main");
+      let chartInstance = null;
 
       function toggleSidebar() {
         sidebar.classList.toggle("closed");
@@ -219,45 +197,46 @@
         localStorage.removeItem("admin_login");
         location.href = "admin-login.html";
       }
-      
-      // Fungsi debug
+
+      // DEBUG FUNCTION - untuk melihat data sebenarnya
       function debugData() {
+        console.log("=== DEBUG DATA ===");
         const kandidat = JSON.parse(localStorage.getItem("kandidat")) || [];
         const suara = JSON.parse(localStorage.getItem("suaraMasuk")) || [];
         const pemilih = JSON.parse(localStorage.getItem("pemilih")) || [];
         
-        let info = `
-          <strong>Data Debug:</strong><br>
-          Jumlah Kandidat: ${kandidat.length}<br>
-          Jumlah Suara Masuk: ${suara.length}<br>
-          Jumlah Pemilih: ${pemilih.length}<br>
-          <br><strong>Detail Suara:</strong><br>
-        `;
+        console.log("Kandidat:", kandidat);
+        console.log("Suara (format sebenarnya):", suara);
+        console.log("Pemilih:", pemilih);
         
-        suara.forEach((s, i) => {
-          info += `${i+1}. NIS: ${s.nis}, Kandidat ID: ${s.idKandidat}<br>`;
+        // Tampilkan jumlah suara per kandidat
+        kandidat.forEach(k => {
+          const jumlah = suara.filter(s => s.idKandidat === k.id).length;
+          console.log(`${k.nama} (ID: ${k.id}): ${jumlah} suara`);
         });
         
-        document.getElementById("debugInfo").innerHTML = info;
-        console.log("Kandidat:", kandidat);
-        console.log("Suara:", suara);
+        alert("Data debug ditampilkan di console (F12)");
       }
 
       // LOAD DATA HASIL - DIPERBAIKI
       function loadHasil() {
-        let kandidat = JSON.parse(localStorage.getItem("kandidat")) || [];
-        let suara = JSON.parse(localStorage.getItem("suaraMasuk")) || [];
-        let pemilih = JSON.parse(localStorage.getItem("pemilih")) || [];
+        // Ambil data dari localStorage dengan format yang benar
+        const kandidat = JSON.parse(localStorage.getItem("kandidat")) || [];
+        const suara = JSON.parse(localStorage.getItem("suaraMasuk")) || []; // Array of objects
+        const pemilih = JSON.parse(localStorage.getItem("pemilih")) || [];
+        
+        console.log("Jumlah kandidat:", kandidat.length);
+        console.log("Jumlah suara:", suara.length);
         
         // Update statistik
         document.getElementById("totalPemilih").innerText = pemilih.length;
         document.getElementById("totalSuara").innerText = suara.length;
         
-        // Hitung persentase
-        const persentase = pemilih.length > 0 
+        // Hitung persentase partisipasi
+        const persentasePartisipasi = pemilih.length > 0 
           ? Math.round((suara.length / pemilih.length) * 100) 
           : 0;
-        document.getElementById("persentase").innerText = persentase + "%";
+        document.getElementById("persentase").innerText = persentasePartisipasi + "%";
         
         let tbody = document.getElementById("tabelHasil");
         
@@ -273,20 +252,20 @@
           return;
         }
         
-        // Hitung total suara untuk chart
+        // Hitung total semua suara untuk persentase
         const totalSemuaSuara = suara.length;
         
         // Generate baris tabel
         let rows = '';
         
         kandidat.forEach((k, i) => {
-          // Hitung suara untuk kandidat ini berdasarkan idKandidat
+          // HITUNG SUARA YANG BENAR: filter berdasarkan idKandidat
           const jumlahSuara = suara.filter(s => s.idKandidat === k.id).length;
           
           // Hitung persentase
-          const persentaseSuara = totalSemuaSuara > 0 
+          const persentase = totalSemuaSuara > 0 
             ? ((jumlahSuara / totalSemuaSuara) * 100).toFixed(1) 
-            : 0;
+            : "0.0";
           
           rows += `
             <tr>
@@ -303,7 +282,7 @@
                 <span class="fw-bold text-primary">${jumlahSuara}</span> suara
               </td>
               <td>
-                <span class="badge bg-info">${persentaseSuara}%</span>
+                <span class="badge bg-info">${persentase}%</span>
               </td>
             </tr>
           `;
@@ -314,8 +293,8 @@
         // Buat chart
         buatChart(kandidat, suara);
         
-        // Auto-refresh setiap 5 detik
-        setTimeout(loadHasil, 5000);
+        // Auto refresh setiap 3 detik
+        setTimeout(loadHasil, 3000);
       }
 
       // GRAFIK - DIPERBAIKI
@@ -329,29 +308,19 @@
           chartInstance.destroy();
         }
         
-        // Siapkan data untuk chart
+        // Siapkan data untuk chart - HITUNG SUARA BERDASARKAN idKandidat
         let labels = kandidat.map((k) => k.nama);
         let data = kandidat.map((k) => {
           return suara.filter(s => s.idKandidat === k.id).length;
         });
         
         // Warna untuk chart
-        const backgroundColors = [
-          'rgba(255, 99, 132, 0.6)',
-          'rgba(54, 162, 235, 0.6)',
-          'rgba(255, 206, 86, 0.6)',
-          'rgba(75, 192, 192, 0.6)',
-          'rgba(153, 102, 255, 0.6)',
-          'rgba(255, 159, 64, 0.6)'
-        ];
-        
-        const borderColors = [
-          'rgba(255, 99, 132, 1)',
-          'rgba(54, 162, 235, 1)',
-          'rgba(255, 206, 86, 1)',
-          'rgba(75, 192, 192, 1)',
-          'rgba(153, 102, 255, 1)',
-          'rgba(255, 159, 64, 1)'
+        const colors = [
+          'rgba(255, 99, 132, 0.7)',
+          'rgba(54, 162, 235, 0.7)',
+          'rgba(255, 206, 86, 0.7)',
+          'rgba(75, 192, 192, 0.7)',
+          'rgba(153, 102, 255, 0.7)'
         ];
         
         // Buat chart baru
@@ -363,36 +332,19 @@
               {
                 label: "Jumlah Suara",
                 data: data,
-                backgroundColor: backgroundColors.slice(0, kandidat.length),
-                borderColor: borderColors.slice(0, kandidat.length),
+                backgroundColor: colors.slice(0, kandidat.length),
+                borderColor: colors.map(c => c.replace('0.7', '1')),
                 borderWidth: 1
               }
             ]
           },
           options: {
             responsive: true,
-            maintainAspectRatio: false,
             scales: {
               y: { 
                 beginAtZero: true,
                 ticks: {
                   stepSize: 1
-                }
-              }
-            },
-            plugins: {
-              legend: {
-                display: true,
-                position: 'top'
-              },
-              tooltip: {
-                callbacks: {
-                  label: function(context) {
-                    const total = data.reduce((a, b) => a + b, 0);
-                    const value = context.raw;
-                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                    return `Suara: ${value} (${percentage}%)`;
-                  }
                 }
               }
             }
@@ -402,42 +354,33 @@
 
       // Load data saat halaman dibuka
       document.addEventListener('DOMContentLoaded', function() {
+        // Tambahkan tombol debug untuk testing
+        const debugBtn = document.createElement('button');
+        debugBtn.className = 'btn btn-sm btn-warning position-fixed';
+        debugBtn.style.bottom = '20px';
+        debugBtn.style.right = '20px';
+        debugBtn.style.zIndex = '1000';
+        debugBtn.innerHTML = '<i class="bi bi-bug"></i> Debug';
+        debugBtn.onclick = debugData;
+        document.body.appendChild(debugBtn);
+        
+        // Load data hasil
         loadHasil();
         
-        // Cek jika ada data
+        // Log data untuk debugging
+        console.log("=== HASIL SUARA LOADED ===");
         const suara = JSON.parse(localStorage.getItem("suaraMasuk")) || [];
-        console.log("Total suara yang tersimpan:", suara.length);
+        console.log("Data suaraMasuk:", suara);
         
+        // Jika tidak ada suara, beri petunjuk
         if (suara.length === 0) {
-          console.log("INFO: Belum ada suara yang masuk. Silakan login sebagai pemilih dan berikan suara.");
+          console.log("INFO: Belum ada suara yang masuk.");
+          console.log("Cara testing:");
+          console.log("1. Login sebagai pemilih (dashboard-pemilih.html)");
+          console.log("2. Pilih kandidat");
+          console.log("3. Refresh halaman ini");
         }
       });
-      
-      // Jika halaman di GitHub Pages, mungkin perlu handle CORS/localStorage
-      function checkEnvironment() {
-        if (window.location.hostname.includes('github.io')) {
-          console.log("Running on GitHub Pages");
-          // Untuk testing di GitHub Pages, buat sample data jika kosong
-          if (!localStorage.getItem("kandidat")) {
-            const sampleKandidat = [
-              { id: "k001", nama: "Kandidat A", visi: "OSIS aktif", misi: "Meningkatkan kegiatan" },
-              { id: "k002", nama: "Kandidat B", visi: "Sekolah kreatif", misi: "Inovasi pembelajaran" }
-            ];
-            localStorage.setItem("kandidat", JSON.stringify(sampleKandidat));
-            
-            const sampleSuara = [
-              { nis: "12345", idKandidat: "k001", waktu: new Date().toISOString() },
-              { nis: "67890", idKandidat: "k002", waktu: new Date().toISOString() }
-            ];
-            localStorage.setItem("suaraMasuk", JSON.stringify(sampleSuara));
-            
-            console.log("Sample data dibuat untuk testing");
-          }
-        }
-      }
-      
-      // Jalankan environment check
-      checkEnvironment();
     </script>
   </body>
 </html>
