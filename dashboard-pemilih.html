@@ -168,7 +168,7 @@
           showAlert("Anda sudah memilih sebelumnya!", "warning");
           return;
         }
-        suara.push({ nis: user.nis, id: kandidatId });
+        suara.push({ nis: user.nis, nama: kandidatnama });
         localStorage.setItem("suaraMasuk", JSON.stringify(suara));
         showAlert("Terima kasih, suara Anda telah dicatat!", "success");
         loadKandidat();
